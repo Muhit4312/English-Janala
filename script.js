@@ -1,3 +1,5 @@
+
+
 const loadLesson = () => {
     const apiLink = "https://openapi.programming-hero.com/api/levels/all"
     fetch(apiLink)
@@ -5,6 +7,11 @@ const loadLesson = () => {
     .then((json) => displayLesson(json.data))
 }
 
+function pronounceWord(word) {
+  const utterance = new SpeechSynthesisUtterance(word);
+  utterance.lang = "en-EN"; // English
+  window.speechSynthesis.speak(utterance);
+}
 
 
 const displayLesson = (lessons) => {
@@ -23,8 +30,20 @@ const displayLesson = (lessons) => {
 
 }
 
+const manageLoadingSpinner = (status) => {
+    if(status == true){
+       document.getElementById("loading-sppiner").classList.remove("hidden")
+       document.getElementById("words-container").classList.add("hidden")
+
+    }
+    else{
+        document.getElementById("words-container").classList.remove("hidden")
+       document.getElementById("loading-sppiner").classList.add("hidden")
+    }
+}
 
 const loadLevelWords = (id) => {
+    manageLoadingSpinner(true);
     const wordLink = `https://openapi.programming-hero.com/api/level/${id}`
     fetch(wordLink)
     .then((res) => res.json())
@@ -54,6 +73,7 @@ const displayLevelWords = (words) => {
             <p class="text-xl font-medium text-gray-400">এই Lesson এ এখনো কোন Vocabulary যুক্ত করা হয়নি।</p>
             <h2 class="font-bold text-3xl mt-5">নেক্সট Lesson এ যান</h2>
         </div>`;
+        manageLoadingSpinner(false)
         return
     }
 
@@ -66,7 +86,7 @@ const displayLevelWords = (words) => {
                 <div class="font-medium text-2xl">${word.meaning ? word.meaning: "Not Found!"} / ${word.pronunciation ? word.pronunciation: "Not Found!"}</div>
                 <div class="flex justify-between items-center">
                     <button onclick="loadWordDetail(${word.id})" class="btn"><i class="fa-solid fa-circle-info"></i></button>
-                    <button class="btn"><i class="fa-solid fa-volume-high"></i></button>
+                    <button onclick="pronounceWord('${word.word}')" class="btn"><i class="fa-solid fa-volume-high"></i></button>
                 </div>
             </div>
         `
@@ -74,6 +94,7 @@ const displayLevelWords = (words) => {
 
         wordsContainer.appendChild(levelDiv)
     });
+    manageLoadingSpinner(false)
 }
 
 
@@ -117,4 +138,29 @@ const displayWordDetail = (wordDetail) =>{
 
 }
 
+
+
+
 loadLesson()
+
+
+document.getElementById("btn-search").addEventListener("click", () => {
+    const lessonButton = document.querySelectorAll(".lesson-button")
+    lessonButton.forEach(btn => btn.classList.remove("active-color"))
+    
+    const inputSearch = document.getElementById("input-search")
+    const inputValue = inputSearch.value.trim().toLowerCase();
+    console.log(inputValue)
+
+
+    fetch("https://openapi.programming-hero.com/api/words/all")
+    .then((responseAll) => responseAll.json())
+    .then((jsonAll) => {
+        const allWords = jsonAll.data
+        const filterWord =  allWords.filter(word => word.word.toLowerCase().includes(inputValue))
+
+        displayLevelWords(filterWord)
+    })
+
+    
+})
